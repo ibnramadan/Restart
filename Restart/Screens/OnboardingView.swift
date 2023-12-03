@@ -13,6 +13,10 @@ struct OnboardingView: View {
     
     @State private var buttonWidth = UIScreen.main.bounds.width - 80
     @State private var buttonOffset: CGFloat = 0.0
+    @State private var isAnimating: Bool = false
+    @State private var imageOffset: CGSize = .zero
+    @State private var indicatorOpacity: Double = 1.0
+    @State private var texTitle: String = "Share."
     var body: some View {
         ZStack {
             Color("ColorBlue")
@@ -22,10 +26,12 @@ struct OnboardingView: View {
                 Spacer()
                 VStack(spacing: 0) {
                     
-                    Text("Share")
+                    Text(texTitle)
                         .font(.system(size: 60))
                         .fontWeight(.heavy)
                         .foregroundStyle(.white)
+                        .transition(.opacity)
+                        .id(texTitle)
                     
                     Text("""
                         It's not how much we give but
@@ -37,14 +43,56 @@ struct OnboardingView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 10)
                 } //: End of header
-                .multilineTextAlignment(.center)
+                .opacity(isAnimating ? 1 : 0)
+                .offset(y: isAnimating ? 0 : -40)
+                .animation(.easeInOut(duration: 1), value: isAnimating)
+                
+                
                 // MARK: Center
                 ZStack {
+                    
                     CircleGroup(shapeColor: .white, shapeOpacity: 0.2)
+                        .offset(x: imageOffset.width * -1)
+                        .blur(radius: abs(imageOffset.width / 5))
+                        .animation(.easeInOut(duration: 1), value: imageOffset)
                     Image("character-1")
                         .resizable()
                         .scaledToFit()
-                }
+                        .opacity(isAnimating ? 1 : 0)
+                        .offset(x: imageOffset.width * 1.2, y: 0)
+                        .rotationEffect(.degrees(Double(imageOffset.width / 20)))
+                        .animation(.easeInOut(duration: 0.5), value: isAnimating)
+                        .gesture(
+                            DragGesture()
+                                .onChanged{ gesture in
+                                    if abs(imageOffset.width) <= 150 {
+                                        imageOffset = gesture.translation
+                                        withAnimation(.linear(duration: 0.25)) {
+                                            indicatorOpacity = 0.0
+                                            texTitle = "Give."
+                                        }
+                                    }
+                                }
+                                .onEnded {_ in
+                                    imageOffset = .zero
+                                    withAnimation(.linear(duration: 0.25)) {
+                                        indicatorOpacity = 1.0
+                                        texTitle = "Share."
+                                    }
+                                }
+                        )//: Gesture
+                        .animation(.easeIn(duration: 1), value: imageOffset)
+                } //: End of Center
+                .overlay(
+                    Image(systemName: "arrow.left.and.right.circle")
+                        .font(.system(size: 44, weight: .ultraLight))
+                        .foregroundColor(.white)
+                        .offset(y: 20)
+                        .opacity(isAnimating ? 1 : 0)
+                        .animation(.easeInOut(duration: 1).delay(2), value: isAnimating)
+                        .opacity(indicatorOpacity)
+                    , alignment: .bottom
+                )
                 Spacer()
                 // MARK: Footer
                 ZStack {
@@ -86,30 +134,36 @@ struct OnboardingView: View {
                         .offset(x: buttonOffset)
                         .gesture(
                             DragGesture()
-                                .onChanged({ gesture in
+                                .onChanged { gesture in
                                     if gesture.translation.width > 0 && buttonOffset <= buttonWidth - 80 {
                                         buttonOffset = gesture.translation.width
                                     }
                                 }
-                            )
-                                .onEnded({ gesture in
-                                    if buttonOffset > buttonWidth / 2 {
-                                        buttonOffset = buttonWidth - 80
-                                        isOnboardingViewActive = false
-                                    } else {
-                                        buttonOffset = 0.0
+                                .onEnded { _ in
+                                    withAnimation(.easeInOut(duration: 0.4)) {
+                                        if buttonOffset > buttonWidth / 2 {
+                                            buttonOffset = buttonWidth - 80
+                                            isOnboardingViewActive = false
+                                        } else {
+                                            buttonOffset = 0.0
+                                        }
                                     }
-                                })
+                                }
                         ) //: End of gesture
                         Spacer()
                     }
                 } //: Footer
                 .frame(width: buttonWidth ,height: 80, alignment: .center)
-                    .padding()
-                    
+                .padding()
+                .opacity(isAnimating ? 1 : 0)
+                .offset(y: isAnimating ? 0 : 40)
+                .animation(.easeInOut(duration: 1), value: isAnimating)
                 
             } //: VStack Ending
         } //: ZStack Ending
+        .onAppear(perform: {
+            isAnimating = true
+        })
     }
 }
 
