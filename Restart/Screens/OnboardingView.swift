@@ -143,6 +143,7 @@ struct OnboardingView: View {
                                     withAnimation(.easeInOut(duration: 0.4)) {
                                         if buttonOffset > buttonWidth / 2 {
                                             buttonOffset = buttonWidth - 80
+                                            playSound(sound: "chimeup", type: "mp3")
                                             isOnboardingViewActive = false
                                         } else {
                                             buttonOffset = 0.0

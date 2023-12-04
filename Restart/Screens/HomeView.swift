@@ -40,6 +40,7 @@ struct HomeView: View {
             ZStack {
                 Button {
                     withAnimation {
+                        playSound(sound: "success", type: "m4a")
                         isOnboardingViewActive = true
                     }
                 } label: {
